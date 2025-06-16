@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPnP Port Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: #00ff00;
+        }
+        .container {
+            max-width: 400px;
+            margin-top: 100px;
+        }
+        .card {
+            background-color: #1e1e1e;
+            color: #00ff00;
+        }
+        .btn-primary {
+            background-color: #00ff00;
+            border-color: #00ff00;
+            color: #121212;
+        }
+        .btn-primary:hover {
+            background-color: #00cc00;
+            border-color: #00cc00;
+        }
+        .form-control {
+            background-color: #333;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+        }
+        .form-control::placeholder {
+            color: #77ff77;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card p-4">
+            <h3 class="text-center">Login</h3>
+            <form id="loginForm">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Login</button>
+            </form>
+            <div id="loginMessage" class="mt-3 text-center"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            const message = await response.text();
+            document.getElementById('loginMessage').textContent = message;
+
+            if (response.ok) {
+                window.location.href = '/admin';
+            }
+        });
+    </script>
+</body>
+</html>

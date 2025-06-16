@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPnP Port Manager - Admin Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: #00ff00;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        .card {
+            background-color: #1e1e1e;
+            color: #00ff00;
+        }
+        .list-group-item {
+            background-color: #1e1e1e;
+            color: #00ff00;
+        }
+        .btn-primary {
+            background-color: #004d00;
+            border-color: #00ff00;
+            color: #00ff00;
+        }
+        .btn-primary:hover {
+            background-color: #008000;
+        }
+
+        .form-control {
+            background-color: #333;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+        }
+
+        .navbar {
+            background-color: #1e1e1e !important;
+        }
+        .navbar-dark .navbar-nav .nav-link {
+            color: #00ff00 !important;
+        }
+        .navbar-dark .navbar-brand {
+            color: #00ff00 !important;
+        }
+        .navbar-dark .navbar-toggler-icon {
+            filter: invert(1);
+        }
+
+        .list-group-item {
+    background-color: #333;
+    color: #00ff00;
+    border: 1px solid #00ff00;
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="text-center">Admin Panel - User Management</h2>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">UPnP Port Manager</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/dashboard">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin">Admin</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/port-check">Status</a>
+                        </li>
+                    </ul>
+                    <button class="btn btn-danger" id="logout">Logout</button>
+                </div>
+            </div>
+        </nav>
+        
+        <div class="card p-4" id="changePasswordCard" style="display: none;">
+            <h4>Change Admin Password</h4>
+            <form id="changePasswordForm">
+                <div class="mb-3">
+                    <label for="newAdminPassword" class="form-label">New Password</label>
+                    <input type="password" class="form-control" id="newAdminPassword" required>
+                </div>
+                <button type="submit" class="btn btn-warning w-100">Change Password</button>
+            </form>
+        </div>
+
+        <div class="card p-4">
+            <h4>Create New User</h4>
+            <form id="createUserForm">
+                <div class="mb-3">
+                    <label for="newUsername" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="newUsername" required>
+                </div>
+                <div class="mb-3">
+                    <label for="newPassword" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="newPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Create User</button>
+            </form>
+        </div>
+
+        <div class="card p-4 mt-4">
+            <h4>Existing Users</h4>
+            <ul class="list-group" id="userList"></ul>
+        </div>
+    </div>
+
+    <script>
+        async function fetchUsers() {
+            const response = await fetch('/users');
+            const users = await response.json();
+            const userList = document.getElementById('userList');
+            userList.innerHTML = '';
+            users.forEach(user => {
+                const listItem = document.createElement('li');
+                listItem.classList.add('list-group-item');
+                listItem.innerHTML = `${user.username} `;
+                
+                if (user.username !== 'admin') { // Prevent removal of super admin
+                    listItem.innerHTML += `<button class="btn btn-sm btn-danger float-end" onclick="removeUser('${user.username}')">Remove</button>`;
+                }
+                
+                userList.appendChild(listItem);
+            });
+        }
+
+        async function removeUser(username) {
+            await fetch(`/remove-user?username=${username}`, { method: 'DELETE' });
+            fetchUsers();
+        }
+
+        document.getElementById('createUserForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const username = document.getElementById('newUsername').value;
+            const password = document.getElementById('newPassword').value;
+            
+            await fetch('/create-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            fetchUsers();
+        });
+
+        document.getElementById('logout').addEventListener('click', function() {
+            fetch('/logout', { method: 'POST' }).then(() => {
+                window.location.href = '/';
+            });
+        });
+
+        document.getElementById('changePasswordForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const newPassword = document.getElementById('newAdminPassword').value;
+            
+            await fetch('/change-admin-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: newPassword })
+            });
+            alert('Admin password changed successfully.');
+            document.getElementById('changePasswordCard').style.display = 'none';
+        });
+
+        async function checkAdminPasswordChange() {
+            const response = await fetch('/admin-password-status');
+            const data = await response.json();
+            if (!data.changed) {
+                document.getElementById('changePasswordCard').style.display = 'block';
+            }
+        }
+
+        checkAdminPasswordChange();
+        fetchUsers();
+    </script>
+</body>
+</html>

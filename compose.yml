@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  upnp-port-manager:
+    image: reggl.nekosunevr.co.uk/nekoprojects/upnpportmapper:main
+    user: root
+    container_name: upnpportmapper 
+    # build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
